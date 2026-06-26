@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jo Bingo Habesha</title>
+    <!-- የቴሌግራም ሚኒ አፕ ስክሪፕት ማገናኛ -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #0d131a;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+            text-align: center;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #141b24;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #555;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2ec4b6;
+            margin: 10px 0;
+        }
+        .subtitle {
+            color: #8a99a8;
+            font-size: 12px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+        /* የቢንጎ ቁጥሮች መደርደሪያ ሰንጠረዥ (Grid) */
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: #141b24;
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .bingo-cell {
+            background-color: #1c2633;
+            border: 1px solid #2d3d52;
+            border-radius: 8px;
+            padding: 15px 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #a0aec0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        /* ቁጥር ሲመረጥ የሚሆን ዲዛይን */
+        .bingo-cell.selected {
+            background-color: #2ec4b6;
+            color: #0d131a;
+            border-color: #2ec4b6;
+            transform: scale(0.95);
+        }
+        .footer-btn {
+            margin-top: 25px;
+            background-color: #2ec4b6;
+            color: #0d131a;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- የበላይ መረጃ (Header) -->
+    <div class="header">
+        <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
+            <div id="user-pic"></div>
+            <div style="text-align: left;">
+                <div id="user-name" style="font-weight: bold; font-size: 14px;">ተጫዋች</div>
+                <div style="font-size: 11px; color: #8a99a8;">Bingo User</div>
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div style="color: #2ec4b6; font-size: 12px; font-weight: bold;">MAIN WALLET</div>
+            <div style="font-size: 16px; font-weight: bold;">0.00 ETB</div>
+        </div>
+    </div>
+
+    <div class="logo">ቢንጎ ሐበሻ</div>
+    <div class="subtitle">JO BINGO MINI APP</div>
+
+    <p style="text-align: left; color: #8a99a8; font-size: 14px; margin-left: 10px;">ካርታ ይምረጡ (ከ1 - 25):</p>
+    
+    <!-- የቢንጎ ቁጥሮች (ከ1 እስከ 25 ምሳሌ) -->
+    <div class="bingo-grid" id="grid">
+        <!-- ቁጥሮቹ በጃቫስክሪፕት እዚህ ውስጥ ይፈጠራሉ -->
+    </div>
+
+    <button class="footer-btn" id="submit-btn">ምርጫዬን አረጋግጥ</button>
+
+    <script>
+        // የቴሌግራም ዌብ አፕን ማስጀመር
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // አፑን ሙሉ ስክሪን ማድረግ
+
+        // የተጫዋቹን ስም ከቴሌግራም ላይ በራስ-ሰር መውሰድ
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
+        }
+
+        // የቢንጎ ቁጥሮችን (1-25) በቦታው መደርደር
+        const grid = document.getElementById('grid');
+        for (let i = 1; i <= 25; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'bingo-cell';
+            cell.innerText = i;
+            
+            // ቁጥር ሲነካ ቀለም እንዲቀይር ማድረግ
+            cell.addEventListener('click', () => {
+                cell.classList.toggle('selected');
+            });
+            
+            grid.appendChild(cell);
+        }
+
+        // "ምርጫዬን አረጋግጥ" ሲጫን የተመረጡትን ቁጥሮች ለቴሌግራም ቦቱ መላክ
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const selectedCells = document.querySelectorAll('.bingo-cell.selected');
+            let selectedNumbers = [];
+            
+            selectedCells.forEach(cell => {
+                selectedNumbers.push(cell.innerText);
+            });
+
+            if (selectedNumbers.length === 0) {
+                alert("እባክዎ መጀመሪያ ቁጥር ይምረጡ!");
+                return;
+            }
+
+            // መረጃውን ለቦቱ መላክ
+            tg.sendData("የተመረጡ ቁጥሮች: " + selectedNumbers.join(', '));
+            tg.close(); // አፑን መዝጋት
+        });
+    </script>
+</body>
+</html>
