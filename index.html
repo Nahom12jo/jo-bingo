@@ -63,7 +63,7 @@
             color: #a0aec0;
         }
 
-        /* የቢንጎ ቁጥሮች ሰንጠረዥ (1-140 Grid) */
+        /* የቢንጎ ቁጥሮች ሰንጠረዥ (1-200 Grid) */
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr); /* ልክ እንደ መጀመሪያው ፎቶ 10 መስመር */
@@ -131,7 +131,7 @@
     </div>
 
     <div class="brand-section">
-        <div class="main-logo">ቢንጎ ሐበሻ</div>
+        <div class="main-logo">ቢንጎ ጆ</div>
         <div class="sub-logo">JO BINGO MINI APP</div>
     </div>
 
@@ -147,7 +147,7 @@
     </div>
 
     <div class="selection-info">
-        <div>ካርታ ይምረጡ (10 ብር)</div>
+        <div>ካርቴላ ይምረጡ (10 ብር)</div>
         <div><span id="selected-count" style="color: #00e6c3; font-weight: bold;">0</span> / 4</div>
     </div>
 
@@ -169,11 +169,11 @@
             document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
         }
 
-        // ከ1 እስከ 140 ቁጥሮችን በGrid ውስጥ መፍጠር
+        // ከ1 እስከ 200 ቁጥሮችን በGrid ውስጥ መፍጠር
         const grid = document.getElementById('bingo-grid');
         let selectedCount = 0;
 
-        for (let i = 1; i <= 140; i++) {
+        for (let i = 1; i <= 200; i++) {
             const cell = document.createElement('div');
             cell.className = 'bingo-cell';
             cell.innerText = i;
