@@ -3,161 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jo Bingo Habesha</title>
-    <!-- የቴሌግራም ሚኒ አፕ ስክሪፕት ማገናኛ -->
+    <title>Jo Bingo</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            background-color: #0d131a;
+            background-color: #0b0f14;
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
-            padding: 15px;
-            text-align: center;
+            padding: 12px;
+            padding-bottom: 80px; /* ለታችኛው ሜኑ ክፍት ቦታ */
         }
+        /* ፕሮፋይል እና የኪስ ቦርሳ (Top Header) */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background-color: #141b24;
+            background-color: #11171e;
             padding: 10px 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
         }
-        .user-info img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: #555;
+        .user-name { font-weight: bold; font-size: 14px; color: #fff; }
+        .user-sub { font-size: 11px; color: #6c7a89; }
+        .wallet-box { text-align: right; }
+        .wallet-title { font-size: 10px; font-weight: bold; }
+        .wallet-amt { font-size: 15px; font-weight: bold; }
+
+        /* የቢንጎ መለያ (Logo) */
+        .brand-section { text-align: center; margin: 15px 0; }
+        .main-logo { font-size: 26px; font-weight: bold; color: #00e6c3; letter-spacing: 1px; }
+        .sub-logo { font-size: 11px; color: #6c7a89; letter-spacing: 3px; margin-top: 2px; }
+
+        /* የሰዓት እና የብር መረጃ ሳጥኖች (Dashboard) */
+        .dashboard {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
         }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2ec4b6;
-            margin: 10px 0;
+        .dash-card {
+            flex: 1;
+            background-color: #11171e;
+            border: 1px solid #1c2630;
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
         }
-        .subtitle {
-            color: #8a99a8;
-            font-size: 12px;
-            letter-spacing: 2px;
-            margin-bottom: 20px;
+        .dash-card.highlight { border-color: #0076ff; }
+        .card-label { font-size: 11px; color: #6c7a89; margin-bottom: 5px; }
+        .card-val { font-size: 20px; font-weight: bold; }
+        .card-val.blue { color: #0076ff; }
+
+        /* የካርታ መምረጫ መረጃ */
+        .selection-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin: 10px 5px;
+            color: #a0aec0;
         }
-        /* የቢንጎ ቁጥሮች መደርደሪያ ሰንጠረዥ (Grid) */
+
+        /* የቢንጎ ቁጥሮች ሰንጠረዥ (1-140 Grid) */
         .bingo-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            max-width: 400px;
-            margin: 0 auto;
-            background-color: #141b24;
-            padding: 15px;
-            border-radius: 15px;
+            grid-template-columns: repeat(10, 1fr); /* ልክ እንደ መጀመሪያው ፎቶ 10 መስመር */
+            gap: 5px;
+            background-color: #11171e;
+            padding: 10px;
+            border-radius: 12px;
         }
         .bingo-cell {
-            background-color: #1c2633;
-            border: 1px solid #2d3d52;
-            border-radius: 8px;
-            padding: 15px 0;
-            font-size: 16px;
+            background-color: #161f28;
+            border: 1px solid #222f3d;
+            border-radius: 6px;
+            padding: 12px 0;
+            font-size: 12px;
             font-weight: bold;
-            color: #a0aec0;
+            color: #718096;
+            text-align: center;
             cursor: pointer;
-            transition: all 0.2s;
+            user-select: none;
         }
-        /* ቁጥር ሲመረጥ የሚሆን ዲዛይን */
         .bingo-cell.selected {
-            background-color: #2ec4b6;
-            color: #0d131a;
-            border-color: #2ec4b6;
-            transform: scale(0.95);
+            background-color: #00e6c3;
+            color: #0b0f14;
+            border-color: #00e6c3;
         }
-        .footer-btn {
-            margin-top: 25px;
-            background-color: #2ec4b6;
-            color: #0d131a;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 25px;
+
+        /* የታችኛው ዋና ሜኑ (Bottom Navigation) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #11171e;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #1c2630;
+            z-index: 100;
+        }
+        .nav-item {
+            text-align: center;
+            color: #6c7a89;
+            font-size: 11px;
             cursor: pointer;
-            width: 100%;
-            max-width: 400px;
+            text-decoration: none;
+            flex: 1;
         }
+        .nav-item.active { color: #00e6c3; }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
-    <!-- የበላይ መረጃ (Header) -->
     <div class="header">
-        <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
-            <div id="user-pic"></div>
-            <div style="text-align: left;">
-                <div id="user-name" style="font-weight: bold; font-size: 14px;">ተጫዋች</div>
-                <div style="font-size: 11px; color: #8a99a8;">Bingo User</div>
-            </div>
+        <div>
+            <div id="user-name" class="user-name">ተጫዋች</div>
+            <div class="user-sub">Bingo User</div>
         </div>
-        <div style="text-align: right;">
-            <div style="color: #2ec4b6; font-size: 12px; font-weight: bold;">MAIN WALLET</div>
-            <div style="font-size: 16px; font-weight: bold;">0.00 ETB</div>
+        <div class="wallet-box">
+            <div class="wallet-title" style="color: #00e6c3;">PLAY WALLET</div>
+            <div class="wallet-amt">0.00 ETB</div>
+            <div class="wallet-title" style="color: #ffb800; margin-top: 2px;">MAIN WALLET</div>
+            <div class="wallet-amt" style="font-size: 13px;">0.00</div>
         </div>
     </div>
 
-    <div class="logo">ቢንጎ ሐበሻ</div>
-    <div class="subtitle">JO BINGO MINI APP</div>
-
-    <p style="text-align: left; color: #8a99a8; font-size: 14px; margin-left: 10px;">ካርታ ይምረጡ (ከ1 - 25):</p>
-    
-    <!-- የቢንጎ ቁጥሮች (ከ1 እስከ 25 ምሳሌ) -->
-    <div class="bingo-grid" id="grid">
-        <!-- ቁጥሮቹ በጃቫስክሪፕት እዚህ ውስጥ ይፈጠራሉ -->
+    <div class="brand-section">
+        <div class="main-logo">ቢንጎ ሐበሻ</div>
+        <div class="sub-logo">JO BINGO MINI APP</div>
     </div>
 
-    <button class="footer-btn" id="submit-btn">ምርጫዬን አረጋግጥ</button>
+    <div class="dashboard">
+        <div class="dash-card">
+            <div class="card-label">ጨዋታው ሊጀምር ነው</div>
+            <div class="card-val" id="timer">01:00</div>
+        </div>
+        <div class="dash-card highlight">
+            <div class="card-label" style="color: #0076ff;">ድራፍት</div>
+            <div class="card-val blue">134.00 <span style="font-size: 12px;">ETB</span></div>
+        </div>
+    </div>
+
+    <div class="selection-info">
+        <div>ካርታ ይምረጡ (10 ብር)</div>
+        <div><span id="selected-count" style="color: #00e6c3; font-weight: bold;">0</span> / 4</div>
+    </div>
+
+    <div class="bingo-grid" id="bingo-grid"></div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active"><div class="nav-icon">🏠</div>Home</div>
+        <div class="nav-item"><div class="nav-icon">🎟️</div>Ticket</div>
+        <div class="nav-item"><div class="nav-icon">💰</div>Wallet</div>
+        <div class="nav-item"><div class="nav-icon">🏆</div>Rank</div>
+        <div class="nav-item"><div class="nav-icon">👤</div>Profile</div>
+    </div>
 
     <script>
-        // የቴሌግራም ዌብ አፕን ማስጀመር
         const tg = window.Telegram.WebApp;
-        tg.expand(); // አፑን ሙሉ ስክሪን ማድረግ
+        tg.expand();
 
-        // የተጫዋቹን ስም ከቴሌግራም ላይ በራስ-ሰር መውሰድ
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
         }
 
-        // የቢንጎ ቁጥሮችን (1-25) በቦታው መደርደር
-        const grid = document.getElementById('grid');
-        for (let i = 1; i <= 25; i++) {
+        // ከ1 እስከ 140 ቁጥሮችን በGrid ውስጥ መፍጠር
+        const grid = document.getElementById('bingo-grid');
+        let selectedCount = 0;
+
+        for (let i = 1; i <= 140; i++) {
             const cell = document.createElement('div');
             cell.className = 'bingo-cell';
             cell.innerText = i;
-            
-            // ቁጥር ሲነካ ቀለም እንዲቀይር ማድረግ
+
             cell.addEventListener('click', () => {
-                cell.classList.toggle('selected');
+                if (cell.classList.contains('selected')) {
+                    cell.classList.remove('selected');
+                    selectedCount--;
+                } else {
+                    if (selectedCount < 4) { // ቢበዛ 4 ካርታ መምረጥ
+                        cell.classList.add('selected');
+                        selectedCount++;
+                    } else {
+                        alert("ማሳሰቢያ፡ መምረጥ የሚችሉት ቢበዛ 4 ቁጥሮችን ብቻ ነው!");
+                    }
+                }
+                document.getElementById('selected-count').innerText = selectedCount;
             });
-            
+
             grid.appendChild(cell);
         }
 
-        // "ምርጫዬን አረጋግጥ" ሲጫን የተመረጡትን ቁጥሮች ለቴሌግራም ቦቱ መላክ
-        document.getElementById('submit-btn').addEventListener('click', () => {
-            const selectedCells = document.querySelectorAll('.bingo-cell.selected');
-            let selectedNumbers = [];
-            
-            selectedCells.forEach(cell => {
-                selectedNumbers.push(cell.innerText);
-            });
-
-            if (selectedNumbers.length === 0) {
-                alert("እባክዎ መጀመሪያ ቁጥር ይምረጡ!");
-                return;
+        // የሰዓት ቆጣሪ (Countdown Timer) - 1 ደቂቃ
+        let time = 60;
+        const timerElement = document.getElementById('timer');
+        setInterval(() => {
+            if (time > 0) {
+                time--;
+                let mins = Math.floor(time / 60);
+                let secs = time % 60;
+                timerElement.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            } else {
+                time = 60; // ሰዓቱ ሲያልቅ እንደገና እንዲጀምር
             }
-
-            // መረጃውን ለቦቱ መላክ
-            tg.sendData("የተመረጡ ቁጥሮች: " + selectedNumbers.join(', '));
-            tg.close(); // አፑን መዝጋት
-        });
+        }, 1000);
     </script>
 </body>
 </html>
+
