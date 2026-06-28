@@ -1,214 +1,527 @@
 <!DOCTYPE html>
 <html lang="am">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jo Bingo</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body {
-            background-color: #0b0f14;
-            color: #ffffff;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 12px;
-            padding-bottom: 80px; /* ለታችኛው ሜኑ ክፍት ቦታ */
-        }
-        /* ፕሮፋይል እና የኪስ ቦርሳ (Top Header) */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #11171e;
-            padding: 10px 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .user-name { font-weight: bold; font-size: 14px; color: #fff; }
-        .user-sub { font-size: 11px; color: #6c7a89; }
-        .wallet-box { text-align: right; }
-        .wallet-title { font-size: 10px; font-weight: bold; }
-        .wallet-amt { font-size: 15px; font-weight: bold; }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Gize Bingo</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+  :root{
+    --bg:#0c0e13;
+    --panel:#11141c;
+    --panel-2:#171b25;
+    --line:#232938;
+    --green:#21c25e;
+    --green-deep:#129141;
+    --blue:#2f8fe0;
+    --gold:#f2b400;
+    --red:#e6473f;
+    --text:#f3f5f8;
+    --text-dim:#8b93a3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh;
+  }
+  #app{max-width:480px;margin:0 auto;padding:10px 12px 88px;}
+  .hidden{display:none !important;}
 
-        /* የቢንጎ መለያ (Logo) */
-        .brand-section { text-align: center; margin: 15px 0; }
-        .main-logo { font-size: 26px; font-weight: bold; color: #00e6c3; letter-spacing: 1px; }
-        .sub-logo { font-size: 11px; color: #6c7a89; letter-spacing: 3px; margin-top: 2px; }
+  /* ---- top wallet bar ---- */
+  .walletbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:10px;}
+  .wallet-chip{
+    border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;
+    background:var(--panel);
+  }
+  .wallet-chip span{display:block;font-size:9px;font-weight:600;letter-spacing:.5px;color:var(--text-dim);}
+  .wallet-chip.play{color:var(--green);}
+  .wallet-chip.main{color:var(--gold);}
 
-        /* የሰዓት እና የብር መረጃ ሳጥኖች (Dashboard) */
-        .dashboard {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .dash-card {
-            flex: 1;
-            background-color: #11171e;
-            border: 1px solid #1c2630;
-            border-radius: 12px;
-            padding: 12px;
-            text-align: center;
-        }
-        .dash-card.highlight { border-color: #0076ff; }
-        .card-label { font-size: 11px; color: #6c7a89; margin-bottom: 5px; }
-        .card-val { font-size: 20px; font-weight: bold; }
-        .card-val.blue { color: #0076ff; }
+  /* ---- brand header ---- */
+  .brandrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .brand-title{text-align:left;}
+  .brand-title .am{color:var(--green);font-size:26px;font-weight:800;}
+  .brand-title .en{color:var(--text);font-size:24px;font-weight:800;margin-left:6px;}
+  .brand-sub{font-size:10px;letter-spacing:3px;color:var(--text-dim);margin-top:-2px;}
+  .lang-toggle{
+    display:flex;border:1px solid var(--green);border-radius:8px;overflow:hidden;height:32px;
+  }
+  .lang-toggle button{
+    border:none;background:transparent;color:var(--text-dim);font-weight:800;font-size:12px;
+    padding:0 12px;height:100%;cursor:pointer;
+  }
+  .lang-toggle button.on{background:#fff;color:#0c0e13;}
 
-        /* የካርቴላ መምረጫ መረጃ */
-        .selection-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            margin: 10px 5px;
-            color: #a0aec0;
-        }
+  /* ---- info boxes ---- */
+  .infogrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+  .infobox{
+    border:1px solid var(--line);border-radius:12px;padding:8px 4px;text-align:center;background:var(--panel);
+  }
+  .infobox.active{border-color:var(--blue);box-shadow:0 0 10px rgba(47,143,224,.25);}
+  .infobox .lbl{font-size:10px;color:var(--text-dim);margin-bottom:4px;}
+  .infobox .val{font-size:17px;font-weight:800;}
+  .infobox .val.blue{color:var(--blue);}
+  .infobox .unit{font-size:10px;color:var(--text-dim);}
+  .infobox.locked{opacity:.45;}
 
-        /* የቢንጎ ቁጥሮች ሰንጠረዥ (1-400 Grid) */
-        .bingo-grid {
-            display: grid;
-            grid-template-columns: repeat(10, 1fr); /* ልክ እንደ መጀመሪያው ፎቶ 10 መስመር */
-            gap: 5px;
-            background-color: #11171e;
-            padding: 10px;
-            border-radius: 12px;
-        }
-        .bingo-cell {
-            background-color: #161f28;
-            border: 1px solid #222f3d;
-            border-radius: 6px;
-            padding: 12px 0;
-            font-size: 12px;
-            font-weight: bold;
-            color: #718096;
-            text-align: center;
-            cursor: pointer;
-            user-select: none;
-        }
-        .bingo-cell.selected {
-            background-color: #00e6c3;
-            color: #0b0f14;
-            border-color: #00e6c3;
-        }
+  /* ---- stake row ---- */
+  .stakebar{display:flex;align-items:center;justify-content:space-between;margin:6px 2px 8px;}
+  .stakebar .lbl{font-size:13px;font-weight:700;}
+  .stakebar select{
+    background:var(--panel-2);color:var(--gold);border:1px solid var(--line);border-radius:8px;
+    font-weight:800;padding:5px 8px;font-size:13px;
+  }
+  .stakebar .count{color:var(--green);font-weight:800;font-size:14px;}
 
-        /* የታችኛው ዋና ሜኑ (Bottom Navigation) */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #11171e;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            border-top: 1px solid #1c2630;
-            z-index: 100;
-        }
-        .nav-item {
-            text-align: center;
-            color: #6c7a89;
-            font-size: 11px;
-            cursor: pointer;
-            text-decoration: none;
-            flex: 1;
-        }
-        .nav-item.active { color: #00e6c3; }
-        .nav-icon { font-size: 20px; margin-bottom: 2px; }
-    </style>
+  /* ---- card-pick grid ---- */
+  .pickgrid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:90px;
+  }
+  .pick-cell{
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);border-radius:9px;background:var(--panel);
+    font-weight:700;font-size:13px;color:var(--text-dim);cursor:pointer;position:relative;
+  }
+  .pick-cell.taken{opacity:.3;cursor:not-allowed;}
+  .pick-cell.selected{background:var(--green);color:#04210f;border-color:var(--green);}
+
+  /* ---- floating live button ---- */
+  .live-fab{
+    position:fixed;right:16px;bottom:82px;width:74px;height:74px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#bfe6ff,var(--blue) 60%,#0c5aa8);
+    border:3px solid #cdeaff;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:0 0 18px rgba(47,143,224,.5); color:#06223b; font-weight:800; cursor:pointer;
+  }
+  .live-fab .dot{width:6px;height:6px;background:var(--red);border-radius:50%;display:inline-block;margin-right:3px;}
+  .live-fab .tag{font-size:9px;}
+  .live-fab .amt{font-size:14px;}
+
+  /* ---- bottom nav ---- */
+  .nav{
+    position:fixed;bottom:0;left:0;right:0;background:#0f1118;border-top:1px solid var(--line);
+    display:flex;justify-content:space-around;padding:7px 2px;max-width:480px;margin:0 auto;
+  }
+  .nav button{
+    background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;
+    color:var(--text-dim);font-size:10px;font-weight:700;padding:4px 6px;cursor:pointer;
+  }
+  .nav button.active{color:var(--green);}
+  .nav .ic{font-size:18px;}
+
+  /* ---- generic card ---- */
+  .panel{
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;
+  }
+  .panel h2{margin:0 0 10px;font-size:14px;color:var(--gold);}
+  button.btn{
+    border:none;border-radius:10px;padding:12px 16px;font-weight:800;font-size:14px;cursor:pointer;width:100%;
+  }
+  .btn-green{background:linear-gradient(180deg,#4be08a,var(--green-deep));color:#04210f;}
+  .btn-blue{background:linear-gradient(180deg,#7fc4ff,var(--blue));color:#06223b;}
+  .btn-red{background:linear-gradient(180deg,#f59791,var(--red));color:#2a0606;}
+  .btn-outline{background:transparent;border:1px solid var(--line);color:var(--text);}
+  input{width:100%;background:var(--panel-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px;font-size:14px;}
+  label{font-size:11px;color:var(--text-dim);display:block;margin-bottom:5px;}
+
+  /* ---- game screen / bingo board ---- */
+  .pot-banner{text-align:center;margin-bottom:10px;}
+  .pot-banner .amt{color:var(--gold);font-size:22px;font-weight:800;}
+  .status-line{text-align:center;color:var(--text-dim);font-size:12px;margin-bottom:10px;}
+  .called-row{display:flex;gap:6px;overflow-x:auto;padding:6px 0 10px;}
+  .called-chip{
+    min-width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;
+  }
+  .board-wrap{background:#fff;border-radius:16px;padding:10px;box-shadow:0 0 24px rgba(255,255,255,.08);}
+  .board-header{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:5px;}
+  .board-header div{
+    text-align:center;color:#fff;font-weight:800;border-radius:7px;padding:6px 0;font-size:15px;
+  }
+  .bh-B{background:#2f8fe0;} .bh-I{background:#5b4fc4;} .bh-N{background:#9b3fc4;}
+  .bh-G{background:#21a85a;} .bh-O{background:#e08a1d;}
+  .board-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+  .bcell{
+    aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:7px;
+    background:#f3f3f6;color:#1a1d24;font-weight:800;font-size:14px;
+  }
+  .bcell.free{background:#eef3ff;}
+  .bcell.free .star{color:#2f8fe0;font-size:16px;}
+  .bcell.marked{background:#21c25e;color:#fff;}
+  .bcell.callednotmarked{box-shadow:inset 0 0 0 2px var(--gold);}
+
+  /* ---- win modal ---- */
+  .win-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;}
+  .win-box{background:var(--panel);border:1px solid var(--gold);border-radius:18px;padding:24px;text-align:center;max-width:320px;width:100%;}
+  .win-box .winner-tag{color:var(--text-dim);font-size:12px;letter-spacing:1px;}
+  .win-box .bingo-word{font-size:34px;font-weight:900;color:#fff;letter-spacing:6px;margin:6px 0 14px;text-shadow:0 0 14px var(--gold);}
+  .win-box .prize-box{border:1px solid var(--gold);border-radius:10px;padding:10px;margin:14px 0;}
+  .win-box .prize-box .lbl{font-size:11px;color:var(--text-dim);}
+  .win-box .prize-box .amt{font-size:22px;font-weight:800;color:var(--gold);}
+
+  .toast{
+    position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#171b25;border:1px solid var(--blue);
+    color:var(--text);padding:9px 16px;border-radius:9px;font-size:13px;z-index:999;
+  }
+  .lb-item{display:flex;justify-content:space-between;padding:9px 4px;border-bottom:1px solid var(--line);font-size:13px;}
+  .lb-rank{color:var(--gold);font-weight:800;width:24px;display:inline-block;}
+  .center-msg{text-align:center;padding:24px 10px;color:var(--text-dim);font-size:13px;}
+</style>
 </head>
 <body>
+<div id="app">
 
-    <div class="header">
-        <div>
-            <div id="user-name" class="user-name">ተጫዋች</div>
-            <div class="user-sub">Bingo User</div>
-        </div>
-        <div class="wallet-box">
-            <div class="wallet-title" style="color: #00e6c3;">PLAY WALLET</div>
-            <div class="wallet-amt">0.00 ETB</div>
-            <div class="wallet-title" style="color: #ffb800; margin-top: 2px;">MAIN WALLET</div>
-            <div class="wallet-amt" style="font-size: 13px;">0.00</div>
-        </div>
+  <!-- ===== HOME ===== -->
+  <section id="screen-home">
+    <div class="walletbar">
+      <div class="wallet-chip play"><span>PLAY WALLET</span><span id="playWalletVal">0.00</span></div>
+      <div class="wallet-chip main"><span>MAIN WALLET</span><span id="mainWalletVal">0.00</span></div>
     </div>
 
-    <div class="brand-section">
-        <div class="main-logo">ቢንጎ ጆ</div>
-        <div class="sub-logo">JO BINGO MINI APP</div>
+    <div class="brandrow">
+      <div class="brand-title">
+        <div><span class="am">ጊዜ</span><span class="en">ቢንጎ</span></div>
+        <div class="brand-sub">G I Z E &nbsp; B I N G O</div>
+      </div>
+      <div class="lang-toggle">
+        <button class="on" id="langAm">AM</button>
+        <button id="langEn">EN</button>
+      </div>
     </div>
 
-    <div class="dashboard">
-        <div class="dash-card">
-            <div class="card-label">ጨዋታው ሊጀምር ነው</div>
-            <div class="card-val" id="timer">01:00</div>
-        </div>
-        <div class="dash-card highlight">
-            <div class="card-label" style="color: #0076ff;">ድራሽ</div>
-            <div class="card-val blue">0.00 <span style="font-size: 12px;">ETB</span></div>
-        </div>
+    <div class="infogrid">
+      <div class="infobox">
+        <div class="lbl">ቀጣይ ጨዋታ</div>
+        <div class="val" id="countdownVal">--:--</div>
+      </div>
+      <div class="infobox active">
+        <div class="lbl">ደራሽ (Pot)</div>
+        <div class="val blue" id="potPreview">0.00</div>
+        <div class="unit">coins</div>
+      </div>
+      <div class="infobox locked">
+        <div class="lbl">ድጋሚ ይጫወቱ</div>
+        <div class="val">⏳</div>
+      </div>
     </div>
 
-    <div class="selection-info">
-        <div>ካርቴላ ይምረጡ (10 ብር)</div>
-        <div><span id="selected-count" style="color: #00e6c3; font-weight: bold;">0</span> / 4</div>
+    <div class="stakebar">
+      <div class="lbl">ካርቴላ ይምረቱ &nbsp;(<span class="count" id="stakeLabel">10</span> ኮይን)</div>
+      <select id="stakeSelect">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
     </div>
 
-    <div class="bingo-grid" id="bingo-grid"></div>
+    <div class="pickgrid" id="pickGrid"></div>
 
-    <div class="bottom-nav">
-        <div class="nav-item active"><div class="nav-icon">🏠</div>Home</div>
-        <div class="nav-item"><div class="nav-icon">🎟️</div>Ticket</div>
-        <div class="nav-item"><div class="nav-icon">💰</div>Wallet</div>
-        <div class="nav-item"><div class="nav-icon">🏆</div>Rank</div>
-        <div class="nav-item"><div class="nav-icon">👤</div>Profile</div>
+    <div class="live-fab" id="liveFab">
+      <div><span class="dot"></span><span class="tag">LIVE</span></div>
+      <div class="amt" id="fabAmt">0</div>
+      <div class="tag">coins</div>
+    </div>
+  </section>
+
+  <!-- ===== TICKET (open rooms / join by code) ===== -->
+  <section id="screen-ticket" class="hidden">
+    <div class="panel">
+      <h2>🎟️ በ Room ኮድ ይግቡ</h2>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="roomCodeInput" placeholder="ROOM CODE" maxlength="6" style="text-transform:uppercase;" />
+        <button class="btn btn-blue" style="width:auto;white-space:nowrap;" id="joinRoomCodeBtn">ግባ</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>🎮 ክፍት ጨዋታዎች</h2>
+      <div id="roomList"><div class="center-msg">በመጫን ላይ...</div></div>
+      <button class="btn btn-outline" id="refreshRoomsBtn" style="margin-top:8px;">🔄 አድስ</button>
+    </div>
+  </section>
+
+  <!-- ===== WALLET ===== -->
+  <section id="screen-wallet" class="hidden">
+    <div class="panel" style="text-align:center;">
+      <h2 style="text-align:center;">💰 የቨርቹዋል ዋሌት</h2>
+      <div style="font-size:34px;font-weight:800;color:var(--green);" id="walletCoins">0</div>
+      <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">
+        ⚠️ ይህ ጨዋታ ምሳሌያዊ ኮይን ብቻ ይጠቀማል። ምንም እውነተኛ ብር ዲፖዚት/ዊትድሮው የለም።
+      </p>
+    </div>
+    <div class="panel">
+      <h2>🎁 ዕለታዊ ስጦታ</h2>
+      <button class="btn btn-green" id="claimBonusBtn">25 ኮይን ይቀበሉ</button>
+    </div>
+    <div class="panel">
+      <h2>📊 ስታት</h2>
+      <div class="lb-item"><span>የተጫወቱ ጨዋታዎች</span><span id="statGames">0</span></div>
+      <div class="lb-item"><span>ድሎች</span><span id="statWins">0</span></div>
+    </div>
+  </section>
+
+  <!-- ===== RANK ===== -->
+  <section id="screen-rank" class="hidden">
+    <div class="panel">
+      <h2>🏆 ምርጥ ተጫዋቾች</h2>
+      <div id="leaderboardList"><div class="center-msg">በመጫን ላይ...</div></div>
+    </div>
+  </section>
+
+  <!-- ===== PROFILE ===== -->
+  <section id="screen-profile" class="hidden">
+    <div class="panel" style="text-align:center;">
+      <div style="width:62px;height:62px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,#4be08a,#129141);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#04210f;" id="avatarLetter">N</div>
+      <div style="font-weight:800;font-size:17px;" id="profileName">Player</div>
+      <div style="color:var(--text-dim);font-size:12px;">ID: <span id="profileId">-</span></div>
+    </div>
+    <div class="panel">
+      <p style="font-size:12px;color:var(--text-dim);line-height:1.7;">
+        Gize Bingo ለመዝናኛ ብቻ የተሰራ ጨዋታ ነው። ምንም እውነተኛ ብር አይያያዝበትም — ዲፖዚት ወይም ዊትድሮው የለም፣ ሁሉም ኮይኖች ምሳሌያዊ ናቸው።
+      </p>
+    </div>
+  </section>
+
+  <!-- ===== GAME ===== -->
+  <section id="screen-game" class="hidden">
+    <div class="pot-banner">🏆 ድስት: <span class="amt" id="potAmount">0</span> coins &nbsp;·&nbsp; Room <span id="roomCodeLabel">-</span></div>
+    <div class="status-line" id="gameStatusLine">በመጠባበቅ ላይ...</div>
+
+    <div class="panel" id="hostStartCard" style="display:none;">
+      <button class="btn btn-green" id="startGameBtn">▶️ ጨዋታ ጀምር</button>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+    <div class="panel">
+      <h2>የተጠሩ ቁጥሮች</h2>
+      <div class="called-row" id="calledRow"></div>
+    </div>
 
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
-        }
+    <div class="board-wrap">
+      <div class="board-header">
+        <div class="bh-B">B</div><div class="bh-I">I</div><div class="bh-N">N</div><div class="bh-G">G</div><div class="bh-O">O</div>
+      </div>
+      <div class="board-grid" id="bingoGrid"></div>
+    </div>
 
-        // ከ1 እስከ 400 ቁጥሮችን በGrid ውስጥ መፍጠር
-        const grid = document.getElementById('bingo-grid');
-        let selectedCount = 0;
+    <button class="btn btn-red" id="leaveRoomBtn" style="margin-top:12px;">ውጣ</button>
+  </section>
 
-        for (let i = 1; i <= 400; i++) {
-            const cell = document.createElement('div');
-            cell.className = 'bingo-cell';
-            cell.innerText = i;
+</div>
 
-            cell.addEventListener('click', () => {
-                if (cell.classList.contains('selected')) {
-                    cell.classList.remove('selected');
-                    selectedCount--;
-                } else {
-                    if (selectedCount < 4) { // ቢበዛ 4 ካርቴላ መምረጥ
-                        cell.classList.add('selected');
-                        selectedCount++;
-                    } else {
-                        alert("ማሳሰቢያ፡ መምረጥ የሚችሉት ቢበዛ 4 ቁጥሮችን ብቻ ነው!");
-                    }
-                }
-                document.getElementById('selected-count').innerText = selectedCount;
-            });
+<nav class="nav">
+  <button data-screen="home" class="active"><span class="ic">🏠</span>Home</button>
+  <button data-screen="ticket"><span class="ic">🎟️</span>Ticket</button>
+  <button data-screen="wallet"><span class="ic">💰</span>Wallet</button>
+  <button data-screen="rank"><span class="ic">🏆</span>Rank</button>
+  <button data-screen="profile"><span class="ic">👤</span>Profile</button>
+</nav>
 
-            grid.appendChild(cell);
-        }
+<script>
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+if (tg) { tg.ready(); tg.expand(); }
 
-        // የሰዓት ቆጣሪ (Countdown Timer) - 1 ደቂቃ
-        let time = 60;
-        const timerElement = document.getElementById('timer');
-        setInterval(() => {
-            if (time > 0) {
-                time--;
-                let mins = Math.floor(time / 60);
-                let secs = time % 60;
-                timerElement.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            } else {
-                time = 60; // ሰዓቱ ሲያልቅ እንደገና እንዲጀምር
-            }
-        }, 1000);
-    </script>
+function resolveIdentity() {
+  if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    const u = tg.initDataUnsafe.user;
+    return { id: String(u.id), name: u.first_name || u.username || ("Player" + u.id) };
+  }
+  let guestId = localStorage.getItem('gize_guest_id');
+  if (!guestId) { guestId = 'guest_' + Math.random().toString(36).slice(2, 10); localStorage.setItem('gize_guest_id', guestId); }
+  return { id: guestId, name: 'Guest' };
+}
+const me = resolveIdentity();
+let myCoins = 0, currentRoom = null, myCard = null, myMarked = new Set(), selectedPick = null;
+const socket = io();
+
+function toast(msg){ const el=document.createElement('div'); el.className='toast'; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),2600); }
+function setCoins(c){
+  myCoins=c;
+  document.getElementById('playWalletVal').textContent = c.toFixed(2);
+  document.getElementById('mainWalletVal').textContent = '0.00';
+  document.getElementById('walletCoins').textContent = c;
+}
+
+/* ---- nav ---- */
+const screens = ['home','ticket','wallet','rank','profile','game'];
+function showScreen(name){
+  screens.forEach(s => document.getElementById('screen-'+s).classList.toggle('hidden', s!==name));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.screen===name));
+  if(name==='rank') loadLeaderboard();
+  if(name==='ticket') loadRooms();
+}
+document.querySelectorAll('.nav button').forEach(b => b.addEventListener('click', () => showScreen(b.dataset.screen)));
+
+document.getElementById('langAm').addEventListener('click', ()=>{ document.getElementById('langAm').classList.add('on'); document.getElementById('langEn').classList.remove('on'); });
+document.getElementById('langEn').addEventListener('click', ()=>{ document.getElementById('langEn').classList.add('on'); document.getElementById('langAm').classList.remove('on'); toast('English mode coming soon'); });
+
+/* ---- login ---- */
+async function login(){
+  const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: me.id, name: me.name }) });
+  const user = await res.json();
+  setCoins(user.coins);
+  document.getElementById('profileName').textContent = user.name;
+  document.getElementById('profileId').textContent = user.id;
+  document.getElementById('avatarLetter').textContent = (user.name||'?').charAt(0).toUpperCase();
+  document.getElementById('statGames').textContent = user.gamesPlayed;
+  document.getElementById('statWins').textContent = user.wins;
+}
+login();
+
+/* ---- daily bonus ---- */
+document.getElementById('claimBonusBtn').addEventListener('click', async ()=>{
+  const res = await fetch('/api/claim-bonus', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ telegramId: me.id }) });
+  const data = await res.json();
+  if(res.ok){ setCoins(data.coins); toast('🎉 25 ኮይን ተጨምሯል!'); } else toast(data.error || 'ስህተት');
+});
+
+/* ---- card-pick grid (visual ticket picker, 1-100) ---- */
+function renderPickGrid(){
+  const grid = document.getElementById('pickGrid');
+  grid.innerHTML = '';
+  for(let i=1;i<=40;i++){
+    const cell = document.createElement('div');
+    cell.className = 'pick-cell';
+    cell.textContent = i;
+    cell.addEventListener('click', ()=>{
+      if(cell.classList.contains('taken')) return;
+      document.querySelectorAll('.pick-cell.selected').forEach(c=>c.classList.remove('selected'));
+      cell.classList.add('selected');
+      selectedPick = i;
+    });
+    grid.appendChild(cell);
+  }
+}
+renderPickGrid();
+
+document.getElementById('stakeSelect').addEventListener('change', (e)=>{
+  document.getElementById('stakeLabel').textContent = e.target.value;
+});
+
+/* ---- create/join via LIVE button ---- */
+document.getElementById('liveFab').addEventListener('click', ()=>{
+  const stake = parseInt(document.getElementById('stakeSelect').value, 10);
+  if(selectedPick === null) return toast('እባክዎ ካርቴላ ቁጥር ይምረጡ');
+  if(stake > myCoins) return toast('በቂ ኮይን የለዎትም');
+  socket.emit('create_room', { telegramId: me.id, stake });
+});
+
+/* ---- ticket screen: rooms / join by code ---- */
+async function loadRooms(){
+  const listEl = document.getElementById('roomList');
+  const res = await fetch('/api/rooms');
+  const rooms = await res.json();
+  if(!rooms.length){ listEl.innerHTML = '<div class="center-msg">አሁን ክፍት ጨዋታ የለም።</div>'; return; }
+  listEl.innerHTML = rooms.map(r => `
+    <div class="lb-item">
+      <span><b>${r.id}</b> · ${r.players.length} ተጫዋች</span>
+      <span style="color:var(--gold);font-weight:800;">${r.pot} <button class="btn btn-blue" style="width:auto;padding:4px 10px;display:inline;margin-left:6px;" onclick="joinRoom('${r.id}')">ግባ</button></span>
+    </div>`).join('');
+}
+document.getElementById('refreshRoomsBtn').addEventListener('click', loadRooms);
+document.getElementById('joinRoomCodeBtn').addEventListener('click', ()=>{
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  if(code) joinRoom(code);
+});
+function joinRoom(code){ socket.emit('join_room', { telegramId: me.id, roomId: code }); }
+window.joinRoom = joinRoom;
+
+document.getElementById('leaveRoomBtn').addEventListener('click', ()=> location.reload());
+document.getElementById('startGameBtn').addEventListener('click', ()=> socket.emit('start_game', { telegramId: me.id, roomId: currentRoom.id }));
+
+/* ---- socket events ---- */
+socket.on('error_msg', (msg)=> toast(msg));
+
+socket.on('joined_room', ({ room, card, coins })=>{
+  currentRoom = room; myCard = card; myMarked = new Set();
+  setCoins(coins);
+  document.getElementById('roomCodeLabel').textContent = room.id;
+  document.getElementById('potPreview').textContent = room.pot.toFixed(2);
+  document.getElementById('fabAmt').textContent = room.pot;
+  renderCard(); renderRoomState();
+  showScreen('game');
+});
+socket.on('room_update', (room)=>{
+  if(!currentRoom || room.id !== currentRoom.id) return;
+  currentRoom = room; renderRoomState();
+  document.getElementById('potPreview').textContent = room.pot.toFixed(2);
+  document.getElementById('fabAmt').textContent = room.pot;
+});
+socket.on('countdown', (secs)=>{ document.getElementById('gameStatusLine').textContent = `⏳ ጨዋታው ${secs} ሰከንድ ውስጥ ይጀምራል...`; });
+socket.on('number_called', ({ number, calledNumbers })=>{
+  currentRoom.calledNumbers = calledNumbers;
+  document.getElementById('gameStatusLine').textContent = '🎲 ቁጥሮችን ምልክት ያድርጉ!';
+  renderCalled(); renderCard();
+});
+socket.on('game_over', ({ winnerId, winnerName, pot, refunded })=>{
+  document.getElementById('hostStartCard').style.display = 'none';
+  if(refunded) showWinModal(false, 'ምንም አሸናፊ የለም', 0, 'ኮይኖቻችሁ ተመላሽ ሆኗል');
+  else if(winnerId === me.id) showWinModal(true, me.name, pot, null);
+  else showWinModal(false, winnerName || 'ሌላ ተጫዋች', pot, null);
+  login();
+});
+
+function showWinModal(isMe, name, pot, note){
+  const modal = document.createElement('div'); modal.className = 'win-modal';
+  modal.innerHTML = `
+    <div class="win-box">
+      <div class="winner-tag">✨ ${isMe ? 'እንኳን ደስ አለዎት' : 'ጨዋታው አብቅቷል'} ✨</div>
+      <div class="bingo-word">BINGO!</div>
+      <div style="font-weight:800;font-size:17px;">${name}</div>
+      ${note ? `<div style="color:var(--text-dim);font-size:12px;margin-top:6px;">${note}</div>` : ''}
+      <div class="prize-box"><div class="lbl">PRIZE (virtual)</div><div class="amt">${pot} coins</div></div>
+      <button class="btn btn-green" onclick="this.closest('.win-modal').remove(); showScreenGlobal('home');">ወደ ቤት ተመለስ</button>
+    </div>`;
+  document.body.appendChild(modal);
+}
+window.showScreenGlobal = showScreen;
+
+function renderRoomState(){
+  if(currentRoom.status === 'waiting'){
+    document.getElementById('gameStatusLine').textContent = `በመጠባበቅ ላይ... (${currentRoom.players.length} ተጫዋች)`;
+    document.getElementById('hostStartCard').style.display = currentRoom.players.length >= 2 ? 'block' : 'none';
+  } else if(currentRoom.status === 'playing'){
+    document.getElementById('hostStartCard').style.display = 'none';
+  }
+  document.getElementById('potAmount').textContent = currentRoom.pot;
+  renderCalled();
+}
+function renderCalled(){
+  const row = document.getElementById('calledRow');
+  const nums = currentRoom?.calledNumbers || [];
+  row.innerHTML = nums.slice().reverse().map(n=>`<div class="called-chip">${n}</div>`).join('') || '<span style="color:var(--text-dim);font-size:12px;">ምንም ቁጥር አልተጠራም</span>';
+}
+function renderCard(){
+  if(!myCard) return;
+  const grid = document.getElementById('bingoGrid'); grid.innerHTML = '';
+  const called = new Set(currentRoom?.calledNumbers || []);
+  for(let r=0;r<5;r++){
+    for(let c=0;c<5;c++){
+      const val = myCard[r][c];
+      const div = document.createElement('div'); div.className = 'bcell';
+      if(val === 'FREE'){ div.classList.add('free'); div.innerHTML = '<span class="star">★</span>'; }
+      else {
+        div.textContent = val;
+        if(myMarked.has(val)) div.classList.add('marked');
+        else if(called.has(val)) div.classList.add('callednotmarked');
+        div.addEventListener('click', ()=>{
+          if(!called.has(val)) return toast('ይህ ቁጥር ገና አልተጠራም');
+          myMarked.add(val);
+          socket.emit('mark_number', { telegramId: me.id, roomId: currentRoom.id, number: val });
+          renderCard();
+        });
+      }
+      grid.appendChild(div);
+    }
+  }
+}
+
+async function loadLeaderboard(){
+  const res = await fetch('/api/leaderboard'); const list = await res.json();
+  const el = document.getElementById('leaderboardList');
+  if(!list.length){ el.innerHTML = '<div class="center-msg">ገና ምንም ውጤት የለም</div>'; return; }
+  el.innerHTML = list.map((u,i)=>`<div class="lb-item"><span><span class="lb-rank">#${i+1}</span> ${u.name}</span><span>🏆 ${u.wins} · 🟡 ${u.coins}</span></div>`).join('');
+}
+</script>
 </body>
 </html>
