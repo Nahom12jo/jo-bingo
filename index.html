@@ -54,7 +54,7 @@
         .card-val { font-size: 20px; font-weight: bold; }
         .card-val.blue { color: #0076ff; }
 
-        /* የካርታ መምረጫ መረጃ */
+        /* የካርቴላ መምረጫ መረጃ */
         .selection-info {
             display: flex;
             justify-content: space-between;
@@ -63,7 +63,7 @@
             color: #a0aec0;
         }
 
-        /* የቢንጎ ቁጥሮች ሰንጠረዥ (1-140 Grid) */
+        /* የቢንጎ ቁጥሮች ሰንጠረዥ (1-400 Grid) */
         .bingo-grid {
             display: grid;
             grid-template-columns: repeat(10, 1fr); /* ልክ እንደ መጀመሪያው ፎቶ 10 መስመር */
@@ -131,7 +131,7 @@
     </div>
 
     <div class="brand-section">
-        <div class="main-logo">ቢንጎ ሐበሻ</div>
+        <div class="main-logo">ቢንጎ ጆ</div>
         <div class="sub-logo">JO BINGO MINI APP</div>
     </div>
 
@@ -141,13 +141,13 @@
             <div class="card-val" id="timer">01:00</div>
         </div>
         <div class="dash-card highlight">
-            <div class="card-label" style="color: #0076ff;">ድራፍት</div>
-            <div class="card-val blue">134.00 <span style="font-size: 12px;">ETB</span></div>
+            <div class="card-label" style="color: #0076ff;">ድራሽ</div>
+            <div class="card-val blue">0.00 <span style="font-size: 12px;">ETB</span></div>
         </div>
     </div>
 
     <div class="selection-info">
-        <div>ካርታ ይምረጡ (10 ብር)</div>
+        <div>ካርቴላ ይምረጡ (10 ብር)</div>
         <div><span id="selected-count" style="color: #00e6c3; font-weight: bold;">0</span> / 4</div>
     </div>
 
@@ -169,11 +169,11 @@
             document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
         }
 
-        // ከ1 እስከ 140 ቁጥሮችን በGrid ውስጥ መፍጠር
+        // ከ1 እስከ 400 ቁጥሮችን በGrid ውስጥ መፍጠር
         const grid = document.getElementById('bingo-grid');
         let selectedCount = 0;
 
-        for (let i = 1; i <= 140; i++) {
+        for (let i = 1; i <= 400; i++) {
             const cell = document.createElement('div');
             cell.className = 'bingo-cell';
             cell.innerText = i;
@@ -183,7 +183,7 @@
                     cell.classList.remove('selected');
                     selectedCount--;
                 } else {
-                    if (selectedCount < 4) { // ቢበዛ 4 ካርታ መምረጥ
+                    if (selectedCount < 4) { // ቢበዛ 4 ካርቴላ መምረጥ
                         cell.classList.add('selected');
                         selectedCount++;
                     } else {
